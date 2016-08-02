@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkPro.steap.db.mapper.sys.unit.IUnitMapper">
+	
+	<!-- 获得部门树 -->
+	<select id="getUnitTree" resultType="TBaseUnitInfo">
+		select unitId,unitName,upUnitId from t_unit_base_info;
+	</select>
+	
+	<!-- 添加部门 -->
+	<insert id="addUnit" parameterType="TBaseUnitInfo">
+		INSERT INTO
+		t_unit_base_info
+		VALUES(#{unitId},#{unitName},#{upUnitId},#{description})
+	</insert>
+	
+	<!-- 根据部门id删除部门 -->
+	<delete id="deleteUnit" parameterType="String">
+		DELETE FROM
+		t_unit_base_info WHERE unitId=#{unitId}
+	</delete>
+	
+	<!-- 修改部门信息 -->
+	<update id="updateUnit" parameterType="TBaseUnitInfo">
+	update t_unit_base_info
+		<set>
+			<if test="unitName!=null">
+				unitName=#{unitName},
+			</if>
+			<if test="upUnitId!=null">
+				upUnitId=#{upUnitId},
+			</if>
+			<if test="description!=null">
+				description=#{description},
+			</if>
+			</set>
+				where unitId=#{unitId}
+	</update>
+	
+	<!-- 查询部门信息列表 -->
+	<select id="getAllUnit" resultType="TBaseUnitInfo">
+		SELECT unitId,unitName,upUnitId,description FROM t_unit_base_info;
+	</select>
+</mapper>

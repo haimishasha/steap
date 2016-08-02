@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkPro.steap.db.mapper.sys.module.IModuleMapper">
+	
+	<sql id="moduleColumns"> id,moduleId,moduleName,moduleURL,memo1,momo2,inUse,sortNo,menuClass,flag</sql>
+	<!-- 添加模块 -->
+	<insert id="addModule" parameterType="Module">
+		INSERT INTO
+		t_base_defined_url(<include refid="moduleColumns"/>)
+		VALUES(uuid(),#{moduleId},#{moduleName},#{moduleURL},#{memo1},
+		#{momo2},#{inUse},#{sortNo},#{menuClass},#{flag})
+	</insert>
+	
+	<!-- 根据模块id删除模块 -->
+	<delete id="deleteModule" parameterType="String">
+		DELETE FROM
+		t_base_defined_url WHERE id=#{id}
+	</delete>
+	
+	<!-- 修改模块信息 -->
+	<update id="updateModule" parameterType="Module">
+	update t_base_defined_url
+		<set>
+			<if test="moduleId!=null">
+				moduleId=#{moduleId},
+			</if>
+			<if test="moduleName!=null">
+				moduleName=#{moduleName},
+			</if>
+			<if test="moduleURL!=null">
+				moduleURL=#{moduleURL},
+			</if>
+			<if test="memo1!=null">
+				memo1=#{memo1},
+			</if>
+			<if test="momo2!=null">
+				momo2=#{momo2},
+			</if>
+			<if test="inUse!=null">
+				inUse=#{inUse},
+			</if>
+			<if test="sortNo!=null">
+				sortNo=#{sortNo},
+			</if>
+			<if test="menuClass!=null">
+				menuClass=#{menuClass},
+			</if>
+			<if test="flag!=null">
+				flag=#{flag},
+			</if>
+			</set>
+				where id=#{id}
+	</update>
+	
+	<!-- 查询模块信息列表 -->
+	<select id="getAllModule" resultType="Module">
+		SELECT <include refid="moduleColumns"/> FROM t_base_defined_url;
+	</select>
+</mapper>

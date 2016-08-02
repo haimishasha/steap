@@ -1,0 +1,68 @@
+.load_title{
+	color: #266097;
+	height: 100px;
+	
+}
+.load_title h1{
+	margin-top: 20px;
+	margin-left: 30px;
+}
+.load_body{
+	height: 600px;
+	background-color: #1393D4;
+}
+.body_content{
+	height: 100%;
+	background: url(../../img/57060d3b6e414_1024.jpg) no-repeat;
+	background-size: 100% 100%;
+}
+.load_body_right{
+	padding: 20px;
+	height: 450px;
+	width: 350px;
+	border-radius: 5px;
+	
+	background: rgba(0,0,0,0.4);
+	color: white;
+	float: right;
+	margin-right: 5%;
+	margin-top: 50px;
+}
+.load_form{
+	
+}
+.load_form label{
+	height: 28px;
+	line-height: 28px;
+	margin-top: 10px;
+}
+.check_code{
+	
+}
+.check_code span{
+	height: 28px;
+	line-height: 28px;
+	margin-top: 10px;
+}
+.check_code_left{
+	width: 46%;
+	float: left;
+}
+.check_code_right{
+	width: 46%;
+	border: 1px solid white;
+	height: 35px;
+	float: right;
+}
+.sub_btn{
+	margin-top: 20px;
+}
+.sub_btn button{
+	margin: 10px 0;
+}
+.sub_btn a{
+	color: white;
+}
+.sub_btn a:hover{
+	color: deepskyblue;
+}

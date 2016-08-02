@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.thinkPro.steap.db.mapper.specialist.ISpecialistMapper">
+	<!-- 插入会议安排的专家的信息 -->
+	<insert id="insertArrangedSpecialist" parameterType="list">
+		INSERT INTO specialist_arrangement(meetingId,specialistId,source)
+		VALUES
+		<foreach collection="list" item="map" index="index"
+			separator=",">
+			(#{map.meetingId},#{map.specialistId},#{map.source})
+		</foreach>
+	</insert>
+
+	<!-- 修改会议安排的专家的信息 -->
+	<update id="updateLeader" parameterType="map">
+		UPDATE
+		specialist_arrangement 
+		SET
+		isLeader=#{isLeader}
+		WHERE
+		meetingId=#{meetingId} AND specialistId=#{specialistId}
+	</update>
+	
+	<!-- 删除某个会议安排的某个专家 -->
+	<delete id="deleteArrangedSpecialist" parameterType="map">
+		DELETE FROM
+		specialist_arrangement WHERE meetingId=#{meetingId} AND specialistId=#{specialistId};
+	</delete>
+	
+	<!-- 删除某个会议安排的全部专家 -->
+	<delete id="deleteSpecialistsByMeetingId" parameterType="String">
+		DELETE FROM
+		specialist_arrangement WHERE meetingId=#{meetingId};
+	</delete>
+	
+	<!-- 查找下一个推荐专家Id -->
+	<select id="getNextRecommendSpecialistId" parameterType="String"
+		resultType="String">
+		SELECT CONCAT(SUBSTR(MAX(specialistId),1,2),SUBSTR(MAX(specialistId), 3) + 1) FROM
+		specialist_recommend;
+	</select>
+	<!-- 根据项目Id查询推荐专家信息 -->
+	<select id="getRecommendSpecialistList" parameterType="String"
+		resultType="Specialist">
+		select
+		specialistId,name,workUnit,engageDomain,duty,title,sr.telephone, p.applicant as source
+		from specialist_recommend sr, t_project_base_info p 
+		where sr.projectId=p.projectId and sr.projectId=#{projectId};
+	</select>
+	
+	
+	<!-- Start: 专家信息 by yachao-->
+	
+	<resultMap type="Specialist" id="specialistMap">
+		<id property="specialistId" column="specialistId"/>
+		<result property="name" column="name" />
+		<result property="sex" column="sex" />
+		<result property="password" column="password" />
+		<result property="signaturePass" column="signaturePass" />
+		<result property="birthday" column="birthday" />
+		<result property="engageDomain" column="engageDomain" />
+		<result property="duty" column="duty" />
+		<result property="title" column="title" />
+		<result property="telephone" column="telephone" />
+		<result property="email" column="email" />
+		<result property="workUnit" column="workUnit"/>
+		<result property="source" column="source"/>
+	</resultMap>
+	
+	<!-- 根据会议编号获取全部会议安排专家信息 -->
+	<sql id="specialistCommonInfo">t_sa.specialistId, name, workUnit, engageDomain, duty, title, telephone, t_sa.source</sql>
+	<select id="getSpecialistsByMeetingId" parameterType="String" resultMap="specialistMap">
+		select <include refid="specialistCommonInfo" />
+		from specialist_recommend sr, (select specialistId, source from specialist_arrangement where meetingId=#{meetingId}) t_sa
+		where sr.specialistId=t_sa.specialistId
+		UNION ALL
+		select <include refid="specialistCommonInfo" /> 
+		from specialist_library sl, (select specialistId, source from specialist_arrangement where meetingId=#{meetingId}) t_sa
+		where sl.specialistId=t_sa.specialistId
+	</select>
+	
+	<!-- 根据专家编号从专家推荐表中获取专家基本信息-->
+	<sql id="specialistInfo">specialistId, name, sex, password, signaturePass, birthday, engageDomain, duty, title, telephone, email, signature, lastLoginTime, workUnit</sql>
+	<select id="getRecommendSpecialistById" parameterType="String" resultMap="specialistMap">
+		select <include refid="specialistInfo" /> 
+		from specialist_recommend
+		where specialistId=#{specialistId}
+	</select>
+	
+	<!-- 根据专家编号从专家库中获取专家基本信息-->
+	<select id="getLibrarySpecialistById" parameterType="String" resultMap="specialistMap">
+		select <include refid="specialistInfo" />, "专家库" as source 
+		from specialist_library
+		where specialistId=#{specialistId}		
+	</select>
+	
+	<!-- 根据会议编号和专家编号获取专家来源 -->
+	<select id="getSpecialistSource" parameterType="map" resultType="String">
+		select source from specialist_arrangement where meetingId=#{meetingId} and specialistId=#{specialistId}
+	</select>
+	
+	<!-- 根据会议编号查询专家组名单 -->
+	<sql id="specialistGroupInfo">sa.specialistId, name, workUnit, engageDomain, duty, title, telephone, DATE_FORMAT(meetingTime, '%Y-%m-%d') as signTime, isLeader</sql>
+	<select id="getSpecialistGroupByMeetingId" parameterType="String" resultType="map">
+		select <include refid="specialistGroupInfo" /> 
+		from specialist_arrangement sa, specialist_recommend sr, t_meeting_base_info m 
+		where sa.meetingId=m.meetingId and sa.specialistId=sr.specialistId and sa.meetingId=#{meetingId}
+		UNION ALL
+		select <include refid="specialistGroupInfo" />
+		from specialist_arrangement sa, specialist_library sl, t_meeting_base_info m
+		where sa.meetingId=m.meetingId and sa.specialistId=sl.specialistId and sa.meetingId=#{meetingId}
+	</select>
+	
+	<!-- 按条件分页查询专家 -->
+	<select id="getSpecialistsByIf" parameterType="Map"
+		resultType="Specialist">
+		SELECT specialistId,name,sex,birthday,engageDomain,duty,title,telephone,email
+		FROM specialist_library
+		<where>
+			<if test="name!=null">name=#{name}</if>
+			<if test="engageDomain!=null"> AND engageDomain=#{engageDomain}</if>
+			<if test="pageBegin != null and pageSize != null">LIMIT ${pageBegin},#{pageSize}</if>
+		</where>
+	</select>
+	
+	<!-- 录入专家基本信息到推荐表中 -->
+	<insert id="insertRecommendSpecialist" parameterType="Specialist">
+		insert into specialist_recommend(specialistId, projectId, name, sex, birthday, engageDomain, duty, title, telephone, email, workUnit)
+		values(#{specialistId}, #{projectId}, #{name}, #{sex}, DATE_FORMAT(#{birthday}, '%Y-%m-%d'), #{engageDomain}, #{duty}, #{title}, #{telephone}, #{email}, #{workUnit})
+	</insert>
+	
+	<!-- 录入企业推荐专家列表 -->
+<!-- 	<insert id="insertRecommentSpecialistList" parameterType="java.util.List">
+		insert into specialist_recommend(<include refid="srInfo"/>)
+		<foreach collection="list" item="specialist" index="index" separator=",">
+			values(#{specialist.specialistId}, #{specialist.projectId}, #{specialist.name}, #{specialist.sex}, #{specialist.birthday},
+				#{specialist.engageDomain}, #{specialist.duty}, #{specialist.title}, #{specialist.telephone}, #{specialist.email}, #{specialist.workUnit})
+		</foreach>
+	</insert> -->
+	
+	<!-- 录入专家基本信息到专家库中 -->
+	<insert id="insertLibrarySpecialist" parameterType="Specialist">
+		<selectKey keyProperty="specialistId" order="BEFORE" resultType="String">
+			SELECT CONCAT(SUBSTR(MAX(specialistId),1,2),SUBSTR(MAX(specialistId), 3) + 1) FROM specialist_library;
+		</selectKey>
+		insert into specialist_library(specialistId, name, sex, password, birthday, engageDomain, duty, title, telephone, email, workUnit)
+		values(#{specialistId}, #{name}, #{sex}, #{password}, DATE_FORMAT(#{birthday}, '%Y-%m-%d'), #{engageDomain}, #{duty}, #{title}, #{telephone}, #{email}, #{workUnit})
+	</insert>
+	
+	<!-- 设置推荐专家的密码-->
+	<update id="updateRecommendSpecialistPassword" parameterType="map">
+		update specialist_recommend set password=#{password} where specialistId=#{specialistId}
+	</update>
+	
+	<!-- 设置库专家的密码-->
+	<update id="updateLibrarySpecialistPassword" parameterType="map">
+		update specialist_library set password=#{password} where specialistId=#{specialistId}
+	</update>
+	
+	<!-- 设置推荐专家签名 -->
+	<update id="updateRecommendSpecialistSignature" parameterType="map">
+		update specialist_recommend set signature=#{signature} where specialistId=#{specialistId}
+	</update>
+	
+	<!-- 设置库专家签名 -->
+	<update id="updateLibrarySpecialistSignature" parameterType="map">
+		update specialist_library set signature=#{signature} where specialistId=#{specialistId}
+	</update>
+	
+	<!-- 设置推荐专家签名密码 -->
+	<update id="updateRecommendSpecialistSignaturePass" parameterType="map">
+		update specialist_recommend set signaturePass=#{signaturePass} where specialistId=#{specialistId}
+	</update>	
+	
+	<!-- 设置库专家签名密码 -->
+	<update id="updateLibrarySpecialistSignaturePass" parameterType="map">
+		update specialist_recommend set signaturePass=#{signaturePass} where specialistId=#{specialistId}
+	</update>
+	
+	<!-- 设置推荐专家签名和签名密码-->
+	<update id="updateRecommendSpecialistSignatureInfo" parameterType="map">
+		update specialist_recommend set signature=#{signature}, signaturePass=#{signaturePass} where specialistId=#{specialistId}
+	</update>
+	
+	<!-- 设置库专家签名和签名密码-->
+	<update id="updateLibrarySpecialistSignatureInfo" parameterType="map">
+		update specialist_library set signature=#{signature}, signaturePass=#{signaturePass} where specialistId=#{specialistId}
+	</update>
+	
+	<!-- 专家签订承诺书-->
+	<update id="updateSpecialistGignAgree" parameterType="map">
+		update specialist_arrangement set isAgree=#{isAgree} where meetingId=#{meetingId} and specialistId=#{specialistId}
+	</update>
+	
+	<sql id="updateSpecialistCommon">
+		<set>
+			<if test="name!=null">name=#{name},</if>
+			<if test="sex!=null">sex=#{sex},</if>
+			<if test="birthday!=null">birthday=DATE_FORMAT(#{birthday}, '%Y-%m-%d'),</if>
+			<if test="engageDomain!=null">engageDomain=#{engageDomain},</if>
+			<if test="duty!=null">duty=#{duty},</if>
+			<if test="title!=null">title=#{title},</if>
+			<if test="telephone!=null">telephone=#{telephone},</if>
+			<if test="email!=null">email=#{email},</if>
+			<if test="workUnit!=null">workUnit=#{workUnit},</if>
+			<if test="signature">signature=#{signature},</if>
+			<if test="signaturePass">signaturePass=#{signaturePass}</if>
+		</set>		
+	</sql>
+	<!-- 修改专家库专家基本信息 -->
+	<update id="updateLibrarySpecialist" parameterType="Specialist">
+		update specialist_library
+		<include refid="updateSpecialistCommon" />
+		where specialistId=#{specialistId}
+	</update>
+	
+	<!-- 修改企业推荐专家基本信息 -->
+	<update id="updateRecommendSpecialist" parameterType="Specialist">
+		update specialist_recommend
+		<include refid="updateSpecialistCommon" />
+		where specialistId=#{specialistId}
+	</update>
+	
+	<!-- 根据专家编号删除推荐专家信息 -->
+	<delete id="deleteRecommendSpecialistById" parameterType="String">
+		delete from specialist_recommend where specialistId=#{specialistId}
+	</delete>	
+	
+	<!-- 根据专家编号删除库专家信息 -->
+	<delete id="deleteLibrarySpecialistById" parameterType="String">
+		delete from specialist_library where specialistId=#{specialistId}
+	</delete>
+	
+	<!-- End: 专家信息 by yachao -->
+</mapper>

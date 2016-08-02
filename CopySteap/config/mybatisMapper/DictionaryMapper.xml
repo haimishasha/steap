@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkPro.steap.db.mapper.sys.dic.IDictionaryMapper">
+	
+	<sql id="dictionaryColumns">dictionaryOptionId,dictionaryOptionName,upDictionaryOptionId,
+		isUse,description,sortNo,flag,englishName,dataType,remark1,remark2
+	</sql>
+	
+	<!-- 根据字典名称查询字典编码 -->
+	<select id="getCodeByName" parameterType="String" resultType="String">
+		select dictionaryOptionId from dic_system_dictionary where dictionaryOptionName=#{dictionaryOptionName};
+	</select>
+	
+	<!-- 根据字典编码查询字典名称 -->
+	<select id="getNameByCode" parameterType="String" resultType="String">
+		select dictionaryOptionName from dic_system_dictionary where dictionaryOptionId=#{dictionaryOptionId};
+	</select>
+	
+	<!-- 添加字典信息 -->
+	<insert id="addDictionary" parameterType="SystemDictionary">
+		insert into
+		dic_system_dictionary(<include refid="dictionaryColumns"/>)
+		values(#{dictionaryOptionId},#{dictionaryOptionName},#{upDictionaryOptionId},#{isUse},
+		#{description},#{sortNo},#{flag},#{englishName},#{dataType},#{remark1},#{remark2})
+	</insert>
+
+	<!-- 根据字典Id删除字典信息 -->
+	<delete id="deleteDictionary" parameterType="String">
+		delete from dic_system_dictionary where
+		dictionaryOptionId=#{dictionaryOptionId};
+	</delete>
+
+	<!-- 修改字典信息 -->
+	<update id="updateDictionary" parameterType="SystemDictionary">
+		update dic_system_dictionary
+		<set>
+			<if test="dictionaryOptionName!=null &amp;&amp; dictionaryOptionName !='' ">
+				dictionaryOptionName=#{dictionaryOptionName},
+			</if>
+			<!--  
+			<if test="upDictionaryOptionId!=null &amp;&amp; upDictionaryOptionId !='' ">
+				upDictionaryOptionId=#{upDictionaryOptionId},
+			</if>
+			-->
+			<if test="isUse!=null &amp;&amp; isUse !='' ">
+				isUse=#{isUse},
+			</if>
+			<if test="description!=null &amp;&amp; description !='' ">
+				description=#{description},
+			</if>
+			<if test="sortNo!=null &amp;&amp; sortNo !='' ">
+				sortNo=#{sortNo},
+			</if>
+			<if test="flag!=null &amp;&amp; flag!='' ">
+				flag=#{flag},
+			</if>
+			<if test="englishName!=null &amp;&amp; englishName !='' ">
+				englishName=#{englishName},
+			</if>
+			<if test="dataType!=null &amp;&amp; dataType !='' ">
+				dataType=#{dataType},
+			</if>
+			<if test="remark1!=null &amp;&amp; remark1 !='' ">
+				remark1=#{remark1},
+			</if>
+			<if test="remark2!=null &amp;&amp; remark2 !='' ">
+				remark2=#{remark2}
+			</if>
+			</set>
+				where dictionaryOptionId=#{dictionaryOptionId}
+	</update>
+	
+	<!-- 根据字典编码(dictionaryOptionId)查询字典信息 -->
+	<select id="getDictionaryById" parameterType="String" resultType="SystemDictionary">
+		select <include refid="dictionaryColumns"/> from dic_system_dictionary
+		where dictionaryOptionId=#{dictionaryOptionId};
+	</select>
+	
+	<!-- START BY HaoShaSha -->
+	
+	<!-- 根据条件查询字典信息(字典编号，字典名称) -->
+	<select id="getDictionaryByConditon" parameterType="map" resultType="SystemDictionary">
+		SELECT <include refid="dictionaryColumns"/> FROM dic_system_dictionary 
+		<where>
+			<if test="dictionaryOptionId!=null &amp;&amp; dictionaryOptionId !='' ">
+				dictionaryOptionId=#{dictionaryOptionId}
+			</if>
+			<if test="dictionaryOptionName!=null &amp;&amp; dictionaryOptionName!=''">
+				AND dictionaryOptionName LIKE concat(concat('%',#{dictionaryOptionName}),'%');
+			</if>
+		</where>
+	</select>
+	
+	<!-- 根据upDictionaryOptionId查询下级字典信息 -->
+	
+	<select id="getDictionaryByUpDicId" parameterType="String"
+		resultType="SystemDictionary">
+		SELECT <include refid="dictionaryColumns"/> FROM dic_system_dictionary 
+		WHERE upDictionaryOptionId=#{upDictionaryOptionId};
+	</select>
+
+	<!-- 查询全部字典信息 -->
+	
+	<select id="getAllDictionary" resultType="SystemDictionary">
+		SELECT <include refid="dictionaryColumns"/> FROM dic_system_dictionary;
+	</select>
+
+	<!-- 查询字典树信息 -->
+	
+	<select id="getDictionaryTree" resultType="Map">
+		SELECT dictionaryOptionId,dictionaryOptionName,upDictionaryOptionId FROM dic_system_dictionary;
+	</select>
+
+
+	<!-- 根据上级字典Id查询下一个要插入的下一级字典的编号 -->
+	
+	<select id="getMaxDictionaryId" parameterType="String"
+		resultType="String">
+		SELECT MAX(dictionaryOptionId) FROM dic_system_dictionary WHERE
+		upDictionaryOptionId=#{upDictionaryOptionId}
+	</select>
+	
+	<!-- 暂时没有用到 -->
+	<!-- 根据上级字典Id查询最新的一个下级字典信息 -->
+	<select id="getNewDictionary" parameterType="String" resultType="SystemDictionary">
+		SELECT	<include refid="dictionaryColumns"/>
+		FROM dic_system_dictionary where dictionaryOptionId = (SELECT MAX(dictionaryOptionId) FROM dic_system_dictionary WHERE
+		upDictionaryOptionId=#{upDictionaryOptionId});
+	</select>
+	
+	<!-- 上一级字典禁用后，下一级字典也得禁用 -->
+	<update id="updateChildNotUse" parameterType="String" >
+		UPDATE dic_system_dictionary SET isUse=0 WHERE upDictionaryOptionId=#{upDictionaryOptionId};
+	</update>
+	<!-- END BY HaoShaSha -->
+</mapper>

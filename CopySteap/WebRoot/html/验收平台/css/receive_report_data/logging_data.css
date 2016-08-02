@@ -1,0 +1,12 @@
+.search_bar{
+	width: 1280px;
+}
+.search_bar_input{
+	width: 25%;
+}
+.search_bar_select{
+	width: 15%;
+}
+.search_bar_button{
+	width: 10%;
+}

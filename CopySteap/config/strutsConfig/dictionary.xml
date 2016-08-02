@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
+    "http://struts.apache.org/dtds/struts-2.3.dtd">
+<struts>
+	<package name="dictionary" extends="json-default">
+
+		<action name="searchDictionaryByUpId"
+			class="com.thinkPro.steap.action.dictionary.SearchDictionaryAction"
+			method="searchDictionaryByUpId">
+			<result type="json">
+				<param name="root">result</param>
+			</result>
+		</action>
+		
+		<action name="searchNextId"
+			class="com.thinkPro.steap.action.dictionary.SearchDictionaryAction"
+			method="searchNextId">
+			<result type="json">
+				<param name="root">nextId</param>
+			</result>
+		</action>
+	
+		
+		<action name="searchDictionaryByCondition"
+			class="com.thinkPro.steap.action.dictionary.SearchDictionaryAction"
+			method="searchDictionaryByCondition">
+			<result type="json">
+				<param name="root">result</param>
+			</result>
+		</action>
+		
+		<action name="getUpdateDictionary"
+			class="com.thinkPro.steap.action.dictionary.UpdateDictionaryAction"
+			method="getUpdateDictionary">
+			<result type="json">
+				<param name="root">result</param>
+			</result>
+		</action>
+		<action name="updateDictionaryAction"
+			class="com.thinkPro.steap.action.dictionary.UpdateDictionaryAction"
+			method="updateDictionary">
+			<result type="json">
+				<param name="root">updateResult</param>
+			</result>
+		</action>
+		<action name="addDictionaryAction"
+			class="com.thinkPro.steap.action.dictionary.AddDictionaryAction"
+			method="addDictionary">
+			<result type="json">
+				<param name="root">addResult</param>
+			</result>
+		</action>
+		<action name="deleteDictionaryAction"
+			class="com.thinkPro.steap.action.dictionary.DeleteDictionaryAction"
+			method="deleteDictionary">
+			<result type="json">
+				<param name="root">treeList2</param>
+			</result>
+		</action>
+		<action name="searchTreeAction"
+			class="com.thinkPro.steap.action.dictionary.SearchTreeAction" method="searchTree">
+			<result type="json">
+				<param name="root">treeList2</param>
+			</result>
+		</action>
+	</package>
+</struts>

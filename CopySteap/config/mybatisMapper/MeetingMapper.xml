@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkPro.steap.db.mapper.meeting.IMeetingMapper">
+	
+	<!-- 插入新创建的会议信息 -->
+	<insert id="addMeeting" parameterType="Meeting">
+		<selectKey keyProperty="meetingId" resultType="String"
+			order="BEFORE">
+			SELECT CONCAT(SUBSTR(MAX(meetingId),1,1),SUBSTR(MAX(meetingId), 2) + 1) FROM
+			t_meeting_base_info;
+		</selectKey>
+		INSERT t_meeting_base_info(meetingId, meetingName,meetingPlace,meetingTime,hostId,remark)
+		VALUES
+		(#{meetingId}, #{meetingName},#{meetingPlace},DATE_FORMAT(#{meetingTime},'%Y-%m-%d %H:%i:%S'),#{hostId}, #{remark})
+	</insert>
+
+	<!-- 插入新创建的会议对应的项目信息 -->
+	<insert id="addProjectMeeting" parameterType="map">
+		INSERT project_meeting(meetingId,projectId)
+		VALUES
+		<foreach collection="projectIds" item="projectId" index="index"
+			separator=",">
+			(#{meetingId},#{projectId})
+		</foreach>
+	</insert>
+	
+	
+	<!-- 删除会议(Delete) 级联删除会议项目信息 -->
+	<delete id="deleteMeeting" parameterType="String">
+		DELETE FROM
+		t_meeting_base_info WHERE
+		meetingId=#{meetingId};
+	</delete>
+	
+	<!-- 修改会议的状态 -->
+	<update id="updateMeetingStatus" parameterType="map">
+		UPDATE t_meeting_base_info
+		SET
+		meetingStatus=#{meetingStatus}
+		WHERE meetingId=#{meetingId};
+	</update>
+	
+	<!-- 修改会议的通知 -->
+	<update id="updateMeetingNotice" parameterType="map">
+		UPDATE t_meeting_base_info
+		SET
+		meetingNotice=#{meetingNotice}
+		WHERE meetingId=#{meetingId};
+	</update>
+	
+	<!-- 按条件分页查询会议的基本信息 -->
+	<select id="getMeetingInfos" parameterType="MeetingCondition"
+		resultType="Meeting">
+		SELECT meetingId,meetingName,meetingPlace,meetingTime,dsd.dictionaryOptionName meetingStatus
+		FROM
+		dic_system_dictionary dsd, t_meeting_base_info m
+		WHERE dsd.dictionaryOptionId=m.meetingStatus
+		<if test="meetingStatus != null">
+			AND dictionaryOptionName = #{meetingStatus}
+		</if>
+		<if test="meetingTime != null">
+			AND meetingTime >= DATE_FORMAT(#{meetingTime},'%Y-%m-%d %H:%i:%S')
+		</if>
+		<if test="pageBegin != null and pageSize != null">
+			LIMIT ${pageBegin},#{pageSize}
+		</if>
+	</select>
+
+	<!-- 根据meetingId查询某一个会议涉及到的项目的信息 主要是针对项目信息+通知企业日期+通知企业方式  -->
+	<select id="getEnterpriseNotify" parameterType="String"
+		resultType="EnterpriseNotify">
+		SELECT vpmn.projectId,projectName,applicant,domain,projectFunds,notifyDate,notifyMethod,chargePerson 
+		FROM v_project_meeting_notify vpmn,project_accept pa 
+		WHERE vpmn.projectId=pa.projectId
+		AND meetingId=#{meetingId};
+	</select>
+	
+	<!-- 批量更新通知企业的信息 -->
+	<update id="updateProjectMeeting" parameterType="list">
+		<foreach collection="list" item="map" index="index" open=""
+			close="" separator=";">
+			UPDATE project_meeting
+			<set>
+				<if test="map.notifyDate != null">notifyDate=DATE_FORMAT(#{map.notifyDate}, '%Y-%m-%d'),</if>
+				<if test="map.notifyMethod != null">notifyMethod=#{map.notifyMethod}</if>
+			</set>
+			WHERE meetingId=#{map.meetingId} and projectId=#{map.projectId}
+		</foreach>
+	</update>
+	
+	<sql id="InstitutionNotifyColumns">notifyId,meetingId,institutionName,contactPerson,notifier,notifyDate,notifyMethod</sql>
+	
+	<!-- 查询通知相关人员的基本情况 -->
+	<select id="getInstitutionNotify" parameterType="String"
+		resultType="InstitutionNotify">
+		SELECT <include refid="InstitutionNotifyColumns"/>
+		FROM
+		institution_notify 
+		WHERE meetingId=#{meetingId};
+	</select>
+	
+	
+	<!-- 批量插入通知相关人员的基本情况 -->
+	<insert id="addInstitutionNotify" parameterType="list">
+		INSERT INTO institution_notify(<include refid="InstitutionNotifyColumns"/>)
+		VALUES
+		<foreach collection="list" item="institutionNotify" index="index"
+			separator=",">
+			(uuid(),#{institutionNotify.meetingId},#{institutionNotify.institutionName},
+			#{institutionNotify.contactPerson},#{institutionNotify.notifier},
+			DATE_FORMAT(#{institutionNotify.notifyDate}, '%Y-%m-%d'),#{institutionNotify.notifyMethod})
+		</foreach>
+	</insert>
+	
+	<!-- 这部分暂时用不上 -->
+	<!-- 批量更新通知相关人员的基本情况 -->
+	<update id="updateInstitutionNotify" parameterType="list">
+		<foreach collection="list" item="map" index="index" open=""
+			close="" separator=";">
+			UPDATE institution_notify
+			<set>
+				<if test="map.notifyDate != null">notifyDate=DATE_FORMAT(#{map.notifyDate}, '%Y-%m-%d'),</if>
+				<if test="map.notifyMethod != null">notifyMethod=#{map.notifyMethod}</if>
+			</set>
+			WHERE notifyId=#{map.notifyId}
+		</foreach>
+	</update>
+
+	<!-- 修改会议基本信息(Update) 暂时不需要 -->
+	<!-- 
+	<update id="updateMeeting" parameterType="Meeting"> 
+		update t_meeting_base_info 
+		<set> 
+			<if test="meetingName!=null"> meetingName=#{meetingName}, </if> 
+			<if	test="meetingPlace!=null">meetingPlace=#{meetingPlace}, </if> 
+			<if test="meetingTime!=null"> meetingTime=DATE_FORMAT(#{meetingTime},'%Y-%m-%d %H:%i:%S'), </if> 
+			<if test="hostId!=null"> hostId=#{hostId}, 	</if> 
+			<if test="remark!=null"> remark=#{remark}, </if> 
+		</set> 
+		where meetingId=#{meetingId} 
+	</update> 
+	-->
+	
+	<!-- by yachao 2016/7/23 21:31 -->
+	
+	<resultMap type="Meeting" id="meetingMap">
+		<id property="meetingId" column="meetingId" />
+		<result property="meetingName" column="meetingName" />
+		<result property="meetingTime" column="meetingTime" />
+		<result property="meetingPlace" column="meetingPlace"/>
+		<result property="meetingStatus" column="meetingStatus" />
+		<result property="hostId" column="hostId" />
+		<result property="remark" column="remark" />
+	</resultMap>
+	
+	<!-- 根据专家编号和会议状态查询会议信息 -->
+	<select id="getMeetingByMapInfo" parameterType="map" resultType="Meeting">
+		select sa.meetingId, meetingTime, meetingPlace from t_meeting_base_info m, specialist_arrangement sa, dic_system_dictionary dic
+		where m.meetingId=sa.meetingId and m.meetingStatus=dic.dictionaryOptionId and sa.specialistId=#{specialistId} and dictionaryOptionName=#{meetingStatus} 
+	</select>
+	
+	<!-- 根据会议主持人编号和会议状态查询已经主持过的会议信息集合 -->
+	<sql id="meetingInfo">meetingId, meetingName, meetingTime, meetingPlace, meetingStatus, hostId, remark</sql>
+	<select id="getMeetingListByHostId" parameterType="map" resultType="Meeting">
+		select <include refid="meetingInfo" />
+		from meeting m, dic_system_dictionary dic 
+		where m.meetingStatus=dic.dictionaryOptionId and hostId=#{hostId} 
+		and dic.dictionaryOptionName=#{meetingStatus}
+	</select>
+	
+	<!-- 根据会议主持人编号和会议状态查询会议主持人当前要主持的会议 -->
+	<select id="getMeetingByHostId" parameterType="map" resultType="Meeting">
+		select <include refid="meetingInfo" />
+		from meeting m, dic_system_dictionary dic
+		where m.meetingStatus=dic.dictionaryOptionId and hostId=#{hostId}
+		and dic.dictionaryOptionName=#{meetingStatus}
+	</select>
+</mapper>
+		

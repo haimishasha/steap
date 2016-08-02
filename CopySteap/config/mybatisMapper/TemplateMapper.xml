@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.thinkPro.steap.db.mapper.meeting.ITemplateMapper">
+	
+	<sql id="templateColumns"> templateId,templateName,templateURL,remark </sql>
+	<!-- 查询所有的会议通知的模板 -->
+	<select id="getAllTemplate" resultType="MeetingTemplate">
+		SELECT <include refid="templateColumns"/> FROM t_templeate_base_info;
+	</select>
+
+
+	<!-- 根据条件进行查询会议通知的模板 -->
+	<select id="getTemplateById" parameterType="String" resultType="MeetingTemplate">
+		SELECT <include refid="templateColumns"/> FROM t_templeate_base_info
+		WHERE
+		templateId=#{templateId};
+	</select>
+
+
+	<!-- 创建会议通知的模板 -->
+	<insert id="addTemplate" parameterType="MeetingTemplate">
+		INSERT INTO
+		t_templeate_base_info(<include refid="templateColumns"/>)
+		VALUES(uuid(),#{templateName},#{templateURL},#{remark})
+	</insert>
+
+
+	<!-- 修改会议通知的模板 -->
+	<update id="updateTrainPlanInfo" parameterType="MeetingTemplate">
+		UPDATE
+		t_templeate_base_info SET
+		templateName=#{templateName},
+		templateURL=#{templateURL},
+		remark=#{remark},
+		WHERE
+		templateId=#{templateId}
+	</update>
+
+
+	<!-- 删除会议通知的模板 -->
+	<delete id="deleteTemplate" parameterType="String">
+		DELETE FROM
+		t_templeate_base_info WHERE templateId=#{templateId}
+	</delete>
+</mapper>

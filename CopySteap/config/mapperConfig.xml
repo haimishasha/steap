@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<typeAliases>
+		<package name="com.thinkPro.steap.bean.evaluation"/>
+		<package name="com.thinkPro.steap.bean.material"/>
+		<package name="com.thinkPro.steap.bean.meeting"/>  
+		<package name="com.thinkPro.steap.bean.specialist"/>
+		<package name="com.thinkPro.steap.bean.sys"/>
+		<package name="com.thinkPro.steap.bean.project"/>
+		<package name="com.thinkPro.steap.bean.sys.module"/>
+	</typeAliases>
+	<mappers>
+		<mapper resource="mybatisMapper/DictionaryMapper.xml"/>
+		<mapper resource="mybatisMapper/FileMapper.xml"/>
+		<mapper resource="mybatisMapper/MeetingMapper.xml"/>
+		<mapper resource="mybatisMapper/PictureMapper.xml"/>
+		<mapper resource="mybatisMapper/ProjectMapper.xml"/>
+		<mapper resource="mybatisMapper/SpecialistMapper.xml"/>
+		<mapper resource="mybatisMapper/TemplateMapper.xml"/>
+		<mapper resource="mybatisMapper/UserMapper.xml"/>
+		<mapper resource="mybatisMapper/UnitMapper.xml"/>
+		<mapper resource="mybatisMapper/ModuleMapper.xml"/>
+	</mappers>
+</configuration>

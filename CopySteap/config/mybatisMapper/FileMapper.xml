@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkPro.steap.db.mapper.material.IFileMapper">
+	
+	<!-- START BY HaoShaSha -->
+
+	<!-- 插入文件 -->
+	<insert id="addFile" useGeneratedKeys="true" keyProperty="fileId"
+		parameterType="Material">
+		INSERT INTO
+		t_files_index(fileType,originalName,currentName,uploadTime,fileSize,remark)
+		VALUES
+		(#{fileType},#{originalName},#{currentName},DATE_FORMAT(#{uploadTime},'%Y-%m-%d %H:%i:%S'),#{fileSize},#{remark})
+	</insert>
+	
+	<!-- 插入项目资料表 -->
+	<insert id="addProjectMaterial" parameterType="map">
+		INSERT INTO project_material(materialId,projectId,fileId)
+		VALUES
+		(uuid(),#{projectId},#{fileId})
+	</insert>
+	
+	<!-- 根据文件编号删除文件, 级联删除项目材料信息 -->
+	<delete id="deleteFile" parameterType="String">
+		DELETE FROM
+		t_files_index WHERE
+		fileId=#{fileId};
+	</delete>
+	
+	<!-- 根据文件类型和项目编号查询项目中文件资料 -->
+	<select id="getFile" parameterType="Map"  resultType="Material">
+		SELECT projectId,fileId,fileType,originalName,currentName,uploadTime,fileSize,remark FROM v_project_material_file
+		WHERE projectId=#{projectId} AND fileType=#{fileType};
+	</select>
+	
+	<!-- END BY HaoShaSha -->
+	
+	
+	<!-- Start by yachao -->
+	
+	<resultMap type="Material" id="materialMap">
+		<id property="fileId" column="fileId" />
+		<result property="projectId" column="projectId" />
+		<result property="fileType" column="fileType" />
+		<result property="originalName" column="originalName" />
+		<result property="currentName" column="currentName" />
+		<result property="uploadTime" column="uploadTime" />
+		<result property="fileSize" column="fileSize" />
+		<result property="remark" column="remark" />
+	</resultMap>
+	
+	<!-- 根据项目编号获取项目原始资料信息 -->
+	<!-- 提供于专家评审用，用于在进行专家评审时候进行查看当前项目的全部原始资料信息-->
+	<select id="getOriginalMaterialsBy" parameterType="String" resultMap="materialMap">
+		select fileId, projectId, fileType, originalName, currentName, uploadTime, fileSize, remark
+		from v_project_material_file where projectId=#{projectId};
+	</select>
+	
+	<!-- 根据项目编号获取项目原始材料树 -->
+	<select id="getOriginalMaterialsTree" parameterType="String" resultType="map">
+		select dictionaryOptionId, upDictionaryOptionId, dictionaryOptionName, originalName, currentName 
+		from v_project_material_file pmf, dic_system_dictionary dic
+		where pmf.fileType=dic.dictionaryOptionId and (pmf.fileType between '300002' and '300008') and pmf.projectId=#{projectId}
+		UNION ALL 
+		select dictionaryOptionId, upDictionaryOptionId, dictionaryOptionName, "", ""
+		from dic_system_dictionary where dictionaryOptionId='300'
+		order by dictionaryOptionId;
+	</select>
+	
+</mapper>

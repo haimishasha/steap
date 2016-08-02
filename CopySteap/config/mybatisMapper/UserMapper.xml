@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkPro.steap.db.mapper.sys.user.IUserMapper">
+	
+	<!-- 根据用户Id查询用户信息 -->
+	<select id="getUserById" parameterType="String" resultType="TBaseUserInfo">
+		SELECT userId,unitName,user.unitId,name,sex,duty,telephone
+		FROM t_user_base_info user LEFT JOIN t_unit_base_info unit ON unit.unitId = user.unitId
+		WHERE userId=#{userId};
+	</select>
+	
+	<!-- 验证用户是否存在 -->
+	<select id="isUser" parameterType="Map" resultType="String">
+		select userId from t_user_base_info where userName=#{userName} and password=#{password}
+	</select>
+	
+	<!-- 根据用户Id返回用户权限 -->
+	<select id="getPrivilegeByUserId"	parameterType="String" resultType="UserPrivilege">
+		select moduleName,moduleURL,menuClass
+		from role_module,t_base_defined_url,t_user_base_info,user_role
+		where role_module.moduleId = t_base_defined_url.moduleId
+		and user_role.userId=t_user_base_info.userId
+		and t_user_base_info.userId=#{userId};
+	</select>
+	
+	<!-- 根据部门查询用户 -->
+	<select id="getUsersByUnit" parameterType="String" resultType="Map">
+		select t_unit_base_info.unitName,t_user_base_info.userId,t_user_base_info.`name`,t_user_base_info.duty
+		from t_user_base_info LEFT JOIN t_unit_base_info on t_unit_base_info.unitId = t_user_base_info.unitId
+		<where>
+			<if test="unitName !=null">
+			unitName = #{unitName}
+			</if>
+		</where>
+	</select>
+	
+	
+	
+								<!-- START BY HAOSHASHA -->
+	
+	<!-- 根据电话号码查询用户信息 -->	
+	<select id="getUserByTelephone" parameterType="String" resultType="TBaseUserInfo">
+		SELECT userId,unitName,user.unitId,name,sex,duty,telephone
+		FROM t_user_base_info user LEFT JOIN t_unit_base_info unit ON unit.unitId = user.unitId
+		WHERE telephone=#{telephone};
+	</select>
+	
+	<!-- 添加用户基本信息 -->
+	<insert id="addUser" parameterType="TBaseUserInfo">
+		<selectKey keyProperty="userId" order="BEFORE" resultType="String">
+			SELECT CONCAT(SUBSTR(MAX(userId),1,1),SUBSTR(MAX(userId), 2) + 1) FROM t_user_base_info;
+		</selectKey>
+		<if test="password ==null || password ==''">
+			<bind name="_password" value="telephone"/>
+		</if>
+		INSERT INTO
+		t_user_base_info(userId,unitId,userName,name,sex,password,duty,telephone)
+		VALUES(#{userId},#{unitId},#{userName},#{name},
+		#{sex},#{_password},#{duty},#{telephone})
+	</insert>
+	
+	<!-- 删除用户 -->
+	<delete id="deleteUserById" parameterType="String">
+		DELETE FROM t_user_base_info WHERE
+		userId=#{userId}
+	</delete>
+
+	<!-- 修改用户基本信息 -->
+	<update id="updateUserInfo" parameterType="TBaseUserInfo">
+		UPDATE t_user_base_info
+		<set>
+			<if test="unitId!=null &amp;&amp; unitId!=''">
+				unitId=#{unitId},
+			</if>
+			<!--  
+			<if test="userName!=null &amp;&amp; userName !=''">
+				userName=#{userName},
+			</if>
+			-->
+			<if test="name!=null &amp;&amp; name !=''">
+				name=#{name},
+			</if>
+			<if test="sex!=null &amp;&amp; sex !=''">
+				sex=#{sex},
+			</if>
+			<if test="duty!=null &amp;&amp; duty !=''">
+				duty=#{duty},
+			</if>
+			<if test="telephone!=null &amp;&amp; telephone !=''">
+				telephone=#{telephone}
+			</if>
+		</set>
+		WHERE userId=#{userId}
+	</update>
+
+	<!-- 修改用户密码 -->
+	<update id="updateUserPassword" parameterType="map">
+		<if test="password!=null &amp;&amp; password!=''">
+			UPDATE t_user_base_info SET password=#{password}
+			<where>
+				<if test="userId!=null &amp;&amp; userId!=''">
+					userId=#{userId}
+				</if>
+			</where>
+		</if>
+	</update>
+	
+	<!-- 根据部门Id查询用户, -->
+	<select id="getUsersByUnitId" parameterType="String" resultType="TBaseUserInfo">
+		SELECT userId,unitName,user.unitId,name,sex,duty,telephone
+		FROM t_user_base_info user LEFT JOIN t_unit_base_info unit ON unit.unitId = user.unitId
+		<where>
+			<if test="_parameter!=null &amp;&amp; _parameter !=''">
+			user.unitId = #{unitId}
+			</if>
+		</where>
+	</select>
+	
+	<!-- 给用户分配角色 -->
+	<insert id="addRoleToUser" parameterType="map">
+		INSERT INTO user_role(userId,roleId) VALUES	(#{userId},#{roleId});
+	</insert>
+	
+	<!-- 撤销分配给用户的角色 -->
+	<delete id="deleteRoleFromUser" parameterType="map">
+		DELETE FROM user_role WHERE userId=#{userId} 
+		<if test="roleId != null  &amp;&amp; _parameter !=''">
+		AND roleId=#{roleId};
+		</if>
+	</delete>
+	
+	<!-- 根据用户编号查询该用户所扮演的角色 -->
+	<!-- 这部分将来可能需要搬家，搬到哦RoleMapper.xml -->
+	<select id="getRoleByUserId" parameterType="String" resultType="TBaseRoleInfo">
+		SELECT user_role.roleId,roleName,isUse,description,remark
+		FROM user_role,t_role_base_info
+		WHERE user_role.roleId=t_role_base_info.roleId
+		AND user_role.userId=#{userId};
+	</select>
+	
+	<!-- 根据用户编号查询该用户不扮演的角色  -->
+	<!-- 这部分将来可能需要搬家，搬到哦RoleMapper.xml -->
+	<select id="getLeftRoleByUserId" parameterType="String"
+		resultType="TBaseRoleInfo">
+		SELECT roleId,roleName,isUse,description,remark
+		FROM t_role_base_info
+		WHERE roleId NOT IN(SELECT roleId FROM user_role WHERE userId=#{userId});
+	</select>
+	
+	<!-- 根据角色编号查询该角色下的所有用户 -->
+	<!-- 这部分可能不需要 -->
+	<select id="getUserByRoleId" parameterType="String" resultType="TBaseUserInfo">
+		SELECT user.userId,unitName,user.unitId,name,sex,duty,telephone
+		FROM user_role,t_user_base_info user,t_unit_base_info unit
+		WHERE unit.unitId = user.unitId
+		AND user_role.userId=user.userId
+		AND user_role.roleId=#{roleId};
+	</select>
+	
+	
+	
+	<!-- 根据条件查询用户(用户姓名，用户职务) -->
+	<select id="getUsersByCondition" parameterType="map" resultType="TBaseUserInfo">
+		SELECT userId,unitName,user.unitId,name,sex,duty,telephone
+		FROM
+		t_user_base_info user LEFT JOIN t_unit_base_info unit ON unit.unitId =	user.unitId
+		<where>
+			<if test="name!=null &amp;&amp; name !=''">
+				name LIKE concat(concat('%',#{name}),'%')
+			</if>
+			<if test="duty!=null &amp;&amp; duty !=''">
+				AND duty LIKE concat(concat('%',#{duty}),'%')
+			</if>
+		</where>
+	</select>
+	<!-- END BY HAOSHASHA -->
+</mapper>

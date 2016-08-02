@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkPro.steap.db.mapper.specialist.IEvaluationMapper">
+
+	<resultMap type="SpecialistEvaluation" id="specialistEvaluationMap">
+		<id property="reviewId" column="reviewId" />
+		<result property="specialistId" column="specialistId" />
+		<result property="projectId" column="projectId" />
+		<result property="reviewSuggestion" column="reviewSuggestion" />
+		<result property="remark" column="remark" />
+	</resultMap>
+
+	<resultMap type="EvaluationInfo" id="evaluationInfoMap">
+		<result property="specialistId" column="specialistId"/>
+		<result property="name" column="name" />
+		<result property="workUnit" column="workUnit"/>
+		<result property="reviewSuggestion" column="reviewSuggestion" />
+	</resultMap>
+
+	<!-- 录入专家评审意见信息 -->
+	<insert id="insertSpecialistEvaluation" parameterType="SpecialistEvaluation">
+		<selectKey keyProperty="reviewId" order="BEFORE" resultType="String">
+			select uuid()
+		</selectKey>
+	 	insert into specialist_evaluation(reviewId, specialistId, projectId, reviewSuggestion, remark)
+	 	values(#{reviewId}, #{specialistId}, #{projectId}, #{reviewSuggestion}, #{remark})
+	</insert>
+	
+	<!-- 录入项目评审结果 -->
+	<insert id="insertEvalutionResult" parameterType="EvaluationResult">
+		<selectKey keyProperty="evaluateResultId" order="BEFORE" resultType="String">
+			select uuid()
+		</selectKey>
+		insert into evaluation_result(evaluateResultId, projectId, evaluateResult, remark)
+		values(#{evaluateResultId}, #{projectId}, #{evaluateResult}, #{remark})
+	</insert>
+	
+	<!-- 根据项目编号和专家编号查询评审意见 -->
+	<select id="getSpecialistEvaluation" parameterType="map" resultMap="specialistEvaluationMap">
+		select reviewSuggestion from specialist_evaluation where projectId=#{projectId} and specialistId=#{specialistId}
+	</select>
+	
+	<!-- 根据项目编号查询专家评审信息-->
+	<select id="getSpecialistEvaluationList" parameterType="String" resultMap="evaluationInfoMap">
+		select se.specialistId, name, workUnit, reviewSuggestion from specialist_evaluation se, specialist_recommend sr
+		where se.specialistId=sr.specialistId and se.projectId=#{projectId}
+		UNION ALL
+		select se.specialistId, name, workUnit, reviewSuggestion from specialist_evaluation se, specialist_library sl
+		where se.specialistId=sl.specialistId and se.projectId=#{projectId};
+	</select>
+	
+	<!-- 根据专家编号和会议状态获取要评审的项目数 -->
+	<select id="getEvaluatedProjectCount" parameterType="map" resultType="Integer">
+		select CONCAT(COUNT(*), '个') from project_meeting where meetingId=
+		(select sa.meetingId from specialist_arrangement sa, t_meeting_base_info m, dic_system_dictionary dic
+		where sa.meetingId=m.meetingId and m.meetingStatus=dic.dictionaryOptionId 
+		and sa.specialistId=#{specialistId} and dic.dictionaryOptionName=#{meetingStatus})
+	</select>
+	
+</mapper>

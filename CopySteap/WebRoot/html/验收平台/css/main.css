@@ -1,0 +1,26 @@
+footer{
+	margin-top: 50px;
+}
+.float_left{
+	float: left;
+}
+.float_right{
+	float: right;
+}
+.center{
+	text-align: center;
+}
+.clear{
+	background: none;
+	border: 0;
+	clear: both;
+	display: block;
+	float: none;
+	font-size: 0;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	visibility: hidden;
+	width: 0;
+	height: 0;
+}
